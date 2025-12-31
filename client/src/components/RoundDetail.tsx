@@ -1,14 +1,13 @@
-import type {RoundData, PlayerStats, Side} from "../types";
+import type {RoundData, PlayerStats, Side, TeamStats} from "@shared";
+import {CT_COLOR, T_COLOR, formatDuration} from "@shared";
 import {SideIcon} from "./RoundTimeline";
+import {RoundChat} from "./RoundChat";
 
 interface Props {
   round: RoundData;
   allPlayers: PlayerStats[];
-  teams: [{name: string}, {name: string}];
+  teams: [TeamStats, TeamStats];
 }
-
-const CT_COLOR = "#5D79AE";
-const T_COLOR = "#EAC344";
 
 const WIN_REASON_LABELS: Record<string, string> = {
   elimination: "Elimination",
@@ -16,12 +15,6 @@ const WIN_REASON_LABELS: Record<string, string> = {
   bomb_exploded: "Bomb Exploded",
   timeout: "Time Out",
 };
-
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
 
 export function RoundDetail({round, allPlayers, teams}: Props) {
   // Build a map of player name to their round stats
@@ -128,7 +121,7 @@ export function RoundDetail({round, allPlayers, teams}: Props) {
                     <img
                       src={kill.headshot ? "/headshot.png" : "/skull-white.png"}
                       alt={kill.headshot ? "headshot" : "kill"}
-                      className="w-11 h-11 object-contain"
+                      className="w-8 h-8 object-contain"
                     />
                     <span
                       style={{color: victimSide === "CT" ? CT_COLOR : T_COLOR}}
@@ -153,7 +146,12 @@ export function RoundDetail({round, allPlayers, teams}: Props) {
                     {defuser}
                   </span>
                   <span className="text-gray-400">defused the bomb</span>
-                  <span className="ml-auto">🔧</span>
+                  <img
+                    src="/defuse-pliers.png"
+                    alt="Defused"
+                    className="ml-auto"
+                    style={{width: 16, height: 16}}
+                  />
                 </div>
               )}
               {round.winReason === "bomb_exploded" && (
@@ -260,6 +258,9 @@ export function RoundDetail({round, allPlayers, teams}: Props) {
           ))}
         </div>
       </div>
+
+      {/* Round Chat */}
+      <RoundChat messages={round.chat} teams={teams} />
     </div>
   );
 }

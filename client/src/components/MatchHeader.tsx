@@ -1,4 +1,4 @@
-import type { TeamStats } from '../types';
+import type { TeamStats } from '@shared';
 import { SideIcon } from './RoundTimeline';
 
 interface Props {

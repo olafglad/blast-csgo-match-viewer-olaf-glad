@@ -1,4 +1,5 @@
-import type {RoundData} from "../types";
+import type {RoundData} from "@shared";
+import {CT_COLOR, T_COLOR} from "@shared";
 
 interface Props {
   rounds: RoundData[];
@@ -8,9 +9,22 @@ interface Props {
 
 const WIN_REASON_ICONS: Record<string, string> = {
   elimination: "💀",
-  bomb_defused: "🔧",
   bomb_exploded: "💥",
   timeout: "⏱️",
+};
+
+const WinReasonIcon = ({ winReason }: { winReason: string }) => {
+  if (winReason === "bomb_defused") {
+    return (
+      <img
+        src="/defuse-pliers.png"
+        alt="Defused"
+        className="inline-block"
+        style={{ width: 16, height: 16 }}
+      />
+    );
+  }
+  return <span>{WIN_REASON_ICONS[winReason]}</span>;
 };
 
 const SideIcon = ({side, size = 16}: {side: "CT" | "T"; size?: number}) => (
@@ -76,9 +90,6 @@ export function RoundTimeline({rounds, selectedRound, onSelectRound}: Props) {
 
 export {SideIcon};
 
-const CT_COLOR = "#5D79AE";
-const T_COLOR = "#EAC344";
-
 function RoundBox({
   round,
   isSelected,
@@ -106,7 +117,7 @@ function RoundBox({
       title={`Round ${round.number}: ${round.winner} (${round.winReason})`}
     >
       <span>{round.number}</span>
-      <span className="text-sm">{WIN_REASON_ICONS[round.winReason]}</span>
+      <span className="text-sm"><WinReasonIcon winReason={round.winReason} /></span>
     </button>
   );
 }

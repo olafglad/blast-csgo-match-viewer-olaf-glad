@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
-import type { RoundData, TeamStats } from '../types';
+import type { RoundData, TeamStats } from '@shared';
+import { CT_COLOR, T_COLOR } from '@shared';
 
 interface Props {
   rounds: RoundData[];
@@ -7,9 +8,6 @@ interface Props {
   currentRound: number;
   onRoundChange: (round: number) => void;
 }
-
-const CT_COLOR = '#5D79AE';
-const T_COLOR = '#EAC344';
 
 // Map team names to their logo files
 const TEAM_LOGOS: Record<string, string> = {
@@ -252,7 +250,7 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
 export function computeCumulativeStats(
   rounds: RoundData[],
   upToRound: number,
-  teams: [TeamStats, TeamStats]
+  _teams: [TeamStats, TeamStats]
 ): Map<string, { kills: number; deaths: number; assists: number; damage: number; headshots: number; team: string }> {
   const stats = new Map<string, { kills: number; deaths: number; assists: number; damage: number; headshots: number; team: string }>();
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { MatchData } from '../types';
+import type { MatchData } from '@shared';
 
 const API_URL = 'http://localhost:3001/api';
 
