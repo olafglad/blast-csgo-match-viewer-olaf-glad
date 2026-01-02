@@ -70,17 +70,17 @@ blast-csgo-match-viewer-olaf-glad/
 ├── client/                 # React frontend
 │   └── src/
 │       ├── components/     # UI components
-│       ├── hooks/          # Custom React hooks
-│       └── types.ts        # TypeScript types
+│       └── hooks/          # Custom React hooks
 ├── server/                 # Express backend
 │   └── src/
-│       ├── index.ts        # Server entry point
-│       ├── parser.ts       # Log file parser
-│       └── types.ts        # TypeScript types
+│       ├── index.ts        # Server entry + routes
+│       └── parser.ts       # Log file parser
+├── shared/                 # Shared TypeScript code (@shared alias)
+│   ├── types/              # Type definitions
+│   ├── constants/          # Shared constants (colors, logos)
+│   └── utils/              # Utility functions
 ├── logs/                   # Match log files
-│   └── vitality-vs-navi-nuke.log
-├── start.sh               # Launch script
-└── README.md
+└── start.sh                # Launch script
 ```
 
 ## Sample Match
