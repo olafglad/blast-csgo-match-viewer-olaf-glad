@@ -17,7 +17,7 @@ export function useMatchData() {
         setData(await res.json());
       } catch {
         try {
-          const res = await fetch('/match.json');
+          const res = await fetch(`${import.meta.env.BASE_URL}match.json`);
           if (!res.ok) throw new Error('Failed to load match data');
           setData(await res.json());
         } catch (err) {
