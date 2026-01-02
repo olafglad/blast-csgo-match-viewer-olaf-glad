@@ -1,4 +1,5 @@
 import type { TeamStats } from '@shared';
+import { TEAM_LOGOS } from '@shared';
 import { SideIcon } from './RoundTimeline';
 
 interface Props {
@@ -9,18 +10,11 @@ interface Props {
   avgRoundLength: string;
 }
 
-// Map team names to their logo files
-const TEAM_LOGOS: Record<string, string> = {
-  'TeamVitality': '/vitality-logo.png',
-  'NAVI GGBET': '/navi-logo.png',
-};
-
 export function MatchHeader({ teams, map, duration, date, avgRoundLength }: Props) {
   const [team1, team2] = teams;
 
   return (
     <div className="bg-gray-800 rounded-lg p-6 mb-6">
-      {/* Main Score */}
       <div className="flex items-center justify-center gap-8 mb-4">
         <div className="text-right flex-1">
           <div className="flex items-center justify-end gap-3">
@@ -63,7 +57,6 @@ export function MatchHeader({ teams, map, duration, date, avgRoundLength }: Prop
         </div>
       </div>
 
-      {/* Match Info */}
       <div className="flex justify-center gap-6 text-sm text-gray-400">
         <span>Map: <span className="text-gray-200">{map}</span></span>
         <span>Duration: <span className="text-gray-200">{duration}</span></span>
@@ -71,7 +64,6 @@ export function MatchHeader({ teams, map, duration, date, avgRoundLength }: Prop
         <span>Date: <span className="text-gray-200">{date}</span></span>
       </div>
 
-      {/* Half Breakdown */}
       <div className="mt-4 pt-4 border-t border-gray-700 flex justify-center gap-12 text-sm">
         <div className="text-center">
           <p className="text-gray-400 mb-1 flex items-center justify-center gap-1">

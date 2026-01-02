@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import type { RoundData, TeamStats } from '@shared';
-import { CT_COLOR, T_COLOR } from '@shared';
+import { CT_COLOR, T_COLOR, TEAM_LOGOS } from '@shared';
 
 interface Props {
   rounds: RoundData[];
@@ -9,12 +9,6 @@ interface Props {
   onRoundChange: (round: number) => void;
 }
 
-// Map team names to their logo files
-const TEAM_LOGOS: Record<string, string> = {
-  'TeamVitality': '/vitality-logo.png',
-  'NAVI GGBET': '/navi-logo.png',
-};
-
 export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Props) {
   const totalRounds = rounds.length;
   const halfPoint = 15;
@@ -22,16 +16,13 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRound = useRef(currentRound);
 
-  // Calculate score at current round
   const roundsUpToCurrent = rounds.slice(0, currentRound);
   const team1Score = roundsUpToCurrent.filter(r => r.winner === teams[0].name).length;
   const team2Score = roundsUpToCurrent.filter(r => r.winner === teams[1].name).length;
 
-  // Get color based on who won the current round (for dial highlight)
   const currentRoundData = rounds[currentRound - 1];
   const dialColor = currentRoundData?.winnerSide === 'CT' ? CT_COLOR : T_COLOR;
 
-  // Handle wheel scroll
   useEffect(() => {
     const wheel = wheelRef.current;
     if (!wheel) return;
@@ -47,7 +38,6 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
     return () => wheel.removeEventListener('wheel', handleWheel);
   }, [currentRound, totalRounds, onRoundChange]);
 
-  // Handle drag
   const dragStartY = useRef(0);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -60,12 +50,10 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
   useEffect(() => {
     if (!isDragging) return;
 
-    // Apply cursor to entire document while dragging
     document.body.style.cursor = 'ns-resize';
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = dragStartY.current - e.clientY;
-      // More sensitive: 12px per round
       const roundDelta = Math.round(deltaY / 12);
       const newRound = Math.max(1, Math.min(totalRounds, dragStartRound.current + roundDelta));
       if (newRound !== currentRound) {
@@ -87,7 +75,6 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
     };
   }, [isDragging, currentRound, totalRounds, onRoundChange]);
 
-  // Get visible rounds (current ± 2)
   const visibleRounds = [];
   for (let i = -2; i <= 2; i++) {
     const roundNum = currentRound + i;
@@ -99,14 +86,11 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
   return (
     <div className="bg-gray-700/30 rounded-lg p-4 mb-4">
       <div className="flex items-start gap-6">
-        {/* Left Side - Title aligned with dial top */}
         <div className="shrink-0">
           <h3 className="text-sm font-semibold text-gray-400">After Round {currentRound}</h3>
         </div>
 
-        {/* Center - Score Display */}
         <div className="flex-1 flex items-center justify-center gap-12 self-center">
-          {/* Team 1: Name on top, Logo + Score below */}
           <div className="flex flex-col items-center">
             <span className="text-lg font-semibold text-white mb-2">{teams[0].name}</span>
             <div className="flex items-center gap-3">
@@ -128,7 +112,6 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
 
           <span className="text-3xl text-gray-500">:</span>
 
-          {/* Team 2: Name on top, Score + Logo below */}
           <div className="flex flex-col items-center">
             <span className="text-lg font-semibold text-white mb-2">{teams[1].name}</span>
             <div className="flex items-center gap-3">
@@ -149,16 +132,13 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
           </div>
         </div>
 
-        {/* Right Side - Wheel and Buttons */}
         <div className="flex flex-col items-center gap-2 shrink-0">
-          {/* Drum Wheel */}
           <div
             ref={wheelRef}
             className="relative select-none overflow-hidden rounded-lg cursor-ns-resize"
             style={{ width: 80, height: 100 }}
             onMouseDown={handleMouseDown}
           >
-            {/* Gradient overlays for 3D effect */}
             <div
               className="absolute inset-x-0 top-0 h-8 z-10 pointer-events-none"
               style={{ background: 'linear-gradient(to bottom, rgba(55, 65, 81, 1), transparent)' }}
@@ -168,7 +148,6 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
               style={{ background: 'linear-gradient(to top, rgba(55, 65, 81, 1), transparent)' }}
             />
 
-            {/* Center highlight - color based on round winner */}
             <div
               className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-9 z-0 pointer-events-none border-y"
               style={{
@@ -177,12 +156,9 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
               }}
             />
 
-            {/* Numbers */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               {visibleRounds.map(({ number, offset }) => {
                 const isCenter = offset === 0;
-
-                // 3D transform calculations
                 const rotateX = offset * 30;
                 const scale = 1 - Math.abs(offset) * 0.2;
                 const opacity = 1 - Math.abs(offset) * 0.4;
@@ -212,12 +188,10 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
               })}
             </div>
 
-            {/* Scroll hint arrows */}
             <div className="absolute top-0.5 left-1/2 -translate-x-1/2 text-gray-500 text-[10px]">▲</div>
             <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-gray-500 text-[10px]">▼</div>
           </div>
 
-          {/* Quick buttons */}
           <div className={`flex gap-1 ${isDragging ? 'pointer-events-none' : ''}`}>
             <button
               onClick={() => onRoundChange(1)}
@@ -246,11 +220,9 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
   );
 }
 
-// Helper function to compute cumulative player stats up to a given round
 export function computeCumulativeStats(
   rounds: RoundData[],
-  upToRound: number,
-  _teams: [TeamStats, TeamStats]
+  upToRound: number
 ): Map<string, { kills: number; deaths: number; assists: number; damage: number; headshots: number; team: string }> {
   const stats = new Map<string, { kills: number; deaths: number; assists: number; damage: number; headshots: number; team: string }>();
 

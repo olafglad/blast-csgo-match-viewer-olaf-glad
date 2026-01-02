@@ -1,13 +1,7 @@
-import {useState} from "react";
-import type {
-  PlayerStats,
-  TeamStats,
-  RoundData,
-  FlashStats,
-  MultiKillRounds,
-} from "@shared";
-import {SideIcon} from "./RoundTimeline";
-import {RoundScrubber, computeCumulativeStats} from "./RoundScrubber";
+import { useState } from 'react';
+import type { PlayerStats, TeamStats, RoundData, FlashStats } from '@shared';
+import { SideIcon } from './RoundTimeline';
+import { RoundScrubber, computeCumulativeStats } from './RoundScrubber';
 
 interface Props {
   players: PlayerStats[];
@@ -19,8 +13,6 @@ type ViewMode =
   | "overall"
   | "firstHalf"
   | "secondHalf"
-  | "ctSide"
-  | "tSide"
   | "timeline"
   | "advanced";
 
@@ -31,43 +23,35 @@ export function Scoreboard({players, teams, rounds}: Props) {
   const team1Players = players.filter((p) => p.team === teams[0].name);
   const team2Players = players.filter((p) => p.team === teams[1].name);
 
-  // Compute cumulative stats for timeline mode
   const cumulativeStats =
     viewMode === "timeline" && rounds
-      ? computeCumulativeStats(rounds, timelineRound, teams)
+      ? computeCumulativeStats(rounds, timelineRound)
       : null;
 
   return (
     <div className="bg-gray-800 rounded-lg p-4 mb-6">
-      {/* View Mode Tabs */}
       <div className="flex justify-center gap-2 mb-4">
         {[
-          {mode: "overall" as const, label: "Overall", icon: null},
-          {mode: "firstHalf" as const, label: "1st Half", icon: null},
-          {mode: "secondHalf" as const, label: "2nd Half", icon: null},
-          {mode: "ctSide" as const, label: "Side", icon: "CT" as const},
-          {mode: "tSide" as const, label: "Side", icon: "T" as const},
-          ...(rounds
-            ? [{mode: "timeline" as const, label: "Timeline", icon: null}]
-            : []),
-          {mode: "advanced" as const, label: "Advanced", icon: null},
-        ].map(({mode, label, icon}) => (
+          {mode: "overall" as const, label: "Overall"},
+          {mode: "firstHalf" as const, label: "1st Half"},
+          {mode: "secondHalf" as const, label: "2nd Half"},
+          ...(rounds ? [{mode: "timeline" as const, label: "Timeline"}] : []),
+          {mode: "advanced" as const, label: "Advanced"},
+        ].map(({mode, label}) => (
           <button
             key={mode}
             onClick={() => setViewMode(mode)}
-            className={`px-3 py-1 rounded text-sm transition-colors flex items-center gap-1 ${
+            className={`px-3 py-1 rounded text-sm transition-colors ${
               viewMode === mode
                 ? "bg-gray-600 text-white"
                 : "bg-gray-700 text-gray-400 hover:text-white"
             }`}
           >
-            {icon && <SideIcon side={icon} size={14} />}
             {label}
           </button>
         ))}
       </div>
 
-      {/* Round Scrubber for Timeline Mode */}
       {viewMode === "timeline" && rounds && (
         <RoundScrubber
           rounds={rounds}
@@ -77,7 +61,6 @@ export function Scoreboard({players, teams, rounds}: Props) {
         />
       )}
 
-      {/* Two-column Scoreboard */}
       <div className="grid grid-cols-2 gap-4">
         {viewMode === "advanced" ? (
           <>
@@ -98,6 +81,13 @@ export function Scoreboard({players, teams, rounds}: Props) {
               viewMode={viewMode}
               cumulativeStats={cumulativeStats}
               roundCount={timelineRound}
+              side={
+                viewMode === "firstHalf"
+                  ? "CT"
+                  : viewMode === "secondHalf"
+                    ? "T"
+                    : undefined
+              }
             />
             <TeamTable
               teamName={teams[1].name}
@@ -105,6 +95,13 @@ export function Scoreboard({players, teams, rounds}: Props) {
               viewMode={viewMode}
               cumulativeStats={cumulativeStats}
               roundCount={timelineRound}
+              side={
+                viewMode === "firstHalf"
+                  ? "T"
+                  : viewMode === "secondHalf"
+                    ? "CT"
+                    : undefined
+              }
             />
           </>
         )}
@@ -119,6 +116,7 @@ function TeamTable({
   viewMode,
   cumulativeStats,
   roundCount,
+  side,
 }: {
   teamName: string;
   players: PlayerStats[];
@@ -135,6 +133,7 @@ function TeamTable({
     }
   > | null;
   roundCount: number;
+  side?: "CT" | "T";
 }) {
   const getStats = (p: PlayerStats) => {
     // Timeline mode uses cumulative stats
@@ -174,20 +173,6 @@ function TeamTable({
           adr: p.secondHalf.adr,
           hsPercent: p.secondHalf.hsPercent,
         };
-      case "ctSide":
-        return {
-          kills: p.ctSide.kills,
-          deaths: p.ctSide.deaths,
-          adr: p.ctSide.adr,
-          hsPercent: p.ctSide.hsPercent,
-        };
-      case "tSide":
-        return {
-          kills: p.tSide.kills,
-          deaths: p.tSide.deaths,
-          adr: p.tSide.adr,
-          hsPercent: p.tSide.hsPercent,
-        };
       default:
         return {
           kills: p.kills,
@@ -204,7 +189,10 @@ function TeamTable({
 
   return (
     <div>
-      <h4 className="text-lg font-semibold mb-2 text-white">{teamName}</h4>
+      <h4 className="text-lg font-semibold mb-2 text-white flex items-center gap-2">
+        {teamName}
+        {side && <SideIcon side={side} size={18} />}
+      </h4>
       <table className="w-full text-sm">
         <thead>
           <tr className="text-gray-400 border-b border-gray-700">
@@ -245,7 +233,6 @@ function TeamTable({
   );
 }
 
-// Advanced stats table with expandable flash accordion
 function AdvancedTeamTable({
   teamName,
   players,
@@ -257,7 +244,6 @@ function AdvancedTeamTable({
   const [hoveredLegPlayer, setHoveredLegPlayer] = useState<string | null>(null);
   const [hoveredMKPlayer, setHoveredMKPlayer] = useState<string | null>(null);
 
-  // Sort by opening kills
   const sortedPlayers = [...players].sort(
     (a, b) => b.openingKills - a.openingKills
   );
@@ -390,7 +376,6 @@ function AdvancedTeamTable({
                     >
                       {player.legShotPercent}%
                     </span>
-                    {/* Leg damage tooltip */}
                     {isLegHovered &&
                       (player.leftLegDamage > 0 ||
                         player.rightLegDamage > 0) && (
@@ -400,7 +385,6 @@ function AdvancedTeamTable({
                       )}
                   </td>
                 </tr>
-                {/* Expanded flash stats row */}
                 {isExpanded && (
                   <tr key={`${player.name}-flash`} className="bg-gray-700/20">
                     <td colSpan={6} className="py-2 px-4">
@@ -417,9 +401,7 @@ function AdvancedTeamTable({
   );
 }
 
-// Flash stats expansion panel
 function FlashStatsPanel({stats}: {stats: FlashStats}) {
-  // Calculate total spectator blind time
   const totalSpectatorTime = stats.spectatorBlinds.reduce(
     (sum, s) => sum + s.totalTime,
     0
@@ -462,20 +444,6 @@ function FlashStatsPanel({stats}: {stats: FlashStats}) {
             ({totalSpectatorTime.toFixed(1)}s)
           </span>
         </div>
-        {stats.spectatorBlinds.length > 0 && (
-          <div className="text-gray-500 mt-1">
-            {stats.spectatorBlinds.map((s, i) => (
-              <span key={s.name}>
-                {i > 0 && ", "}
-                <span className="text-purple-300">{s.name}</span>
-                <span className="text-gray-600">
-                  {" "}
-                  ({s.totalTime.toFixed(1)}s)
-                </span>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

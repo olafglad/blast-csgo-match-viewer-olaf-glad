@@ -1,12 +1,11 @@
-import type { ChatMessage, TeamStats } from '@shared';
+import type { ChatMessage } from '@shared';
 import { CT_COLOR, T_COLOR } from '@shared';
 
 interface Props {
   messages: ChatMessage[];
-  teams: [TeamStats, TeamStats];
 }
 
-export function RoundChat({ messages, teams: _teams }: Props) {
+export function RoundChat({ messages }: Props) {
   if (messages.length === 0) {
     return (
       <div className="bg-gray-900/80 rounded-lg p-4 mt-4 border border-gray-700">

@@ -1,5 +1,5 @@
-import type {RoundData} from "@shared";
-import {CT_COLOR, T_COLOR} from "@shared";
+import type { RoundData } from '@shared';
+import { CT_COLOR, T_COLOR } from '@shared';
 
 interface Props {
   rounds: RoundData[];
@@ -41,7 +41,6 @@ export function RoundTimeline({rounds, selectedRound, onSelectRound}: Props) {
     <div className="bg-gray-800 rounded-lg p-4 mb-6">
       <h3 className="text-lg font-semibold mb-4 text-center">Round Timeline</h3>
 
-      {/* First Half */}
       <div className="mb-4">
         <p className="text-xs text-gray-400 mb-2 text-center">First Half</p>
         <div className="flex justify-center gap-2 flex-wrap">
@@ -60,7 +59,6 @@ export function RoundTimeline({rounds, selectedRound, onSelectRound}: Props) {
         </div>
       </div>
 
-      {/* Second Half */}
       {rounds.length > 15 && (
         <div>
           <p className="text-xs text-gray-400 mb-2 text-center">Second Half</p>

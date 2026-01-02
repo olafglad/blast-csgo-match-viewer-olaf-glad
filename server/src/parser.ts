@@ -7,7 +7,6 @@ import type {
   ParsedKill, ParsedDamage, ParsedAssist, ParsedRound, ParsedFlash, ParsedBlind, ParsedChat
 } from './types.js';
 
-// Regex patterns for log parsing
 const PATTERNS = {
   timestamp: /^(\d{2}\/\d{2}\/\d{4}) - (\d{2}:\d{2}:\d{2}):/,
   matchStart: /World triggered "Match_Start" on "(.+?)"/,
@@ -25,7 +24,6 @@ const PATTERNS = {
   chat: /"(.+?)<\d+><[^>]+><(CT|TERRORIST)>" (say|say_team) "(.*)"/,
 };
 
-// Map SFUI notices to win reasons
 function parseWinReason(sfuiNotice: string): WinReason {
   if (sfuiNotice.includes('Bomb_Defused')) return 'bomb_defused';
   if (sfuiNotice.includes('Target_Bombed')) return 'bomb_exploded';
@@ -47,7 +45,6 @@ export function parseLogFile(filePath: string): MatchData {
   const content = readFileSync(filePath, 'utf-8');
   const lines = content.split('\n');
 
-  // State tracking
   let map = '';
   let matchDate = '';
   let ctTeam = '';
@@ -55,21 +52,18 @@ export function parseLogFile(filePath: string): MatchData {
   let matchStarted = false;
   let lastMatchStartLine = 0;
 
-  // Find the last Match_Start (as per challenge hint)
   for (let i = 0; i < lines.length; i++) {
     if (PATTERNS.matchStart.test(lines[i])) {
       lastMatchStartLine = i;
     }
   }
 
-  // Parse from last Match_Start
   const rounds: ParsedRound[] = [];
   let currentRound: ParsedRound | null = null;
   let roundNumber = 0;
   let ctScore = 0;
   let tScore = 0;
 
-  // Buffer for freeze time chat (between rounds)
   let freezeTimeChat: ParsedChat[] = [];
 
   for (let i = lastMatchStartLine; i < lines.length; i++) {
@@ -80,7 +74,6 @@ export function parseLogFile(filePath: string): MatchData {
     const timestamp = parseTimestamp(tsMatch[1], tsMatch[2]);
     if (!matchDate) matchDate = tsMatch[1];
 
-    // Match start
     const matchStartMatch = line.match(PATTERNS.matchStart);
     if (matchStartMatch) {
       map = matchStartMatch[1];
@@ -88,8 +81,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Team names - only capture once right after Match_Start
-    // Avoid MatchStatus lines which appear throughout and reflect side swaps
     const teamMatch = line.match(PATTERNS.teamPlaying);
     if (teamMatch && matchStarted && !line.includes('MatchStatus')) {
       if (teamMatch[1] === 'CT' && !ctTeam) ctTeam = teamMatch[2];
@@ -97,7 +88,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Round start
     if (PATTERNS.roundStart.test(line) && matchStarted && ctTeam && tTeam) {
       roundNumber++;
       currentRound = {
@@ -111,15 +101,14 @@ export function parseLogFile(filePath: string): MatchData {
         assists: [],
         flashes: [],
         blinds: [],
-        chat: [...freezeTimeChat],  // Include buffered freeze time chat
+        chat: [...freezeTimeChat],
         ctTeam,
         tTeam,
       };
-      freezeTimeChat = [];  // Clear the buffer
+      freezeTimeChat = [];
       continue;
     }
 
-    // Chat event - can happen during freeze time (before round) or during round
     const chatMatch = line.match(PATTERNS.chat);
     if (chatMatch && matchStarted && ctTeam && tTeam) {
       const side = chatMatch[2] === 'CT' ? 'CT' : 'T';
@@ -129,7 +118,7 @@ export function parseLogFile(filePath: string): MatchData {
         playerSide: side as Side,
         message: chatMatch[4],
         isTeamChat: chatMatch[3] === 'say_team',
-        isFreezeTime: !currentRound,  // Freeze time if no active round
+        isFreezeTime: !currentRound,
       };
 
       if (currentRound) {
@@ -140,13 +129,10 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Skip if no active round (for other events)
     if (!currentRound) continue;
 
-    // Kill event
     const killMatch = line.match(PATTERNS.kill);
     if (killMatch) {
-      // Filter out non-player kills (func_breakable, prop_dynamic, etc.)
       if (killMatch[3].includes('func_') || killMatch[3].includes('prop_')) continue;
 
       currentRound.kills.push({
@@ -161,7 +147,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Damage event (with hitgroup)
     const damageWithHitgroupMatch = line.match(PATTERNS.damageWithHitgroup);
     if (damageWithHitgroupMatch) {
       currentRound.damage.push({
@@ -175,7 +160,6 @@ export function parseLogFile(filePath: string): MatchData {
       });
       continue;
     }
-    // Damage event (fallback without hitgroup)
     const damageMatch = line.match(PATTERNS.damage);
     if (damageMatch) {
       currentRound.damage.push({
@@ -190,7 +174,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Assist event
     const assistMatch = line.match(PATTERNS.assist);
     if (assistMatch) {
       currentRound.assists.push({
@@ -201,7 +184,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Flash throw event
     const flashMatch = line.match(PATTERNS.flashThrow);
     if (flashMatch) {
       const side = flashMatch[2] === 'CT' ? 'CT' : flashMatch[2] === 'TERRORIST' ? 'T' : 'Spectator';
@@ -214,7 +196,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Blind event
     const blindMatch = line.match(PATTERNS.blind);
     if (blindMatch) {
       const victimSide = blindMatch[2] === 'CT' ? 'CT' : blindMatch[2] === 'TERRORIST' ? 'T' : 'Spectator';
@@ -231,7 +212,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Round win
     const winMatch = line.match(PATTERNS.roundWin);
     if (winMatch && currentRound) {
       currentRound.winner = parseSide(winMatch[1]);
@@ -241,7 +221,6 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Round end
     if (PATTERNS.roundEnd.test(line) && currentRound) {
       currentRound.endTime = timestamp;
       rounds.push(currentRound);
@@ -249,14 +228,12 @@ export function parseLogFile(filePath: string): MatchData {
       continue;
     }
 
-    // Game over
     const gameOverMatch = line.match(PATTERNS.gameOver);
     if (gameOverMatch) {
       break;
     }
   }
 
-  // Transform parsed data into API response format
   return transformToMatchData(rounds, map, matchDate, ctTeam, tTeam);
 }
 
@@ -267,15 +244,13 @@ function transformToMatchData(
   startingCT: string,
   startingT: string
 ): MatchData {
-  // Calculate match duration
   const firstRound = rounds[0];
   const lastRound = rounds[rounds.length - 1];
   const durationMs = lastRound?.endTime.getTime() - firstRound?.startTime.getTime() || 0;
   const durationMins = Math.floor(durationMs / 60000);
   const durationSecs = Math.floor((durationMs % 60000) / 1000);
 
-  // Build player stats map
-  const playerStatsMap = new Map<string, {
+  type AccumulatedStats = {
     team: string;
     kills: number;
     deaths: number;
@@ -298,7 +273,6 @@ function transformToMatchData(
     tDeaths: number;
     tDamage: number;
     tHeadshots: number;
-    // Advanced stats
     openingKills: number;
     openingDeaths: number;
     clutchesWon: number;
@@ -308,12 +282,12 @@ function transformToMatchData(
     totalDamageDealt: number;
     flashStats: FlashStats;
     multiKillRounds: MultiKillRounds;
-  }>();
+  };
 
-  // Track kills per round per player for multi-kill counting
+  const playerStatsMap = new Map<string, AccumulatedStats>();
   const killsPerRoundPerPlayer = new Map<string, number[]>();
 
-  const initPlayerStats = (name: string, team: string) => ({
+  const initPlayerStats = (_name: string, team: string): AccumulatedStats => ({
     team,
     kills: 0,
     deaths: 0,
@@ -336,7 +310,6 @@ function transformToMatchData(
     tDeaths: 0,
     tDamage: 0,
     tHeadshots: 0,
-    // Advanced stats
     openingKills: 0,
     openingDeaths: 0,
     clutchesWon: 0,
@@ -363,7 +336,6 @@ function transformToMatchData(
     },
   });
 
-  // Team stats
   const teamStats: Record<string, TeamStats> = {
     [startingCT]: {
       name: startingCT,
@@ -385,18 +357,18 @@ function transformToMatchData(
     },
   };
 
-  // Process each round
   const roundData: RoundData[] = rounds.map((round, idx) => {
     const isFirstHalf = round.number <= 15;
     const roundNum = round.number;
 
-    // After round 15, sides swap
-    const currentCT = roundNum <= 15 ? startingCT : startingT;
-    const currentT = roundNum <= 15 ? startingT : startingCT;
+    const currentCT = isFirstHalf ? startingCT : startingT;
+    const currentT = isFirstHalf ? startingT : startingCT;
+
+    const getSide = (team: string): Side =>
+      team === currentCT ? 'CT' : 'T';
 
     const winnerTeam = round.winner === 'CT' ? currentCT : currentT;
 
-    // Update team stats
     teamStats[winnerTeam].finalScore++;
     if (isFirstHalf) teamStats[winnerTeam].firstHalfScore++;
     else teamStats[winnerTeam].secondHalfScore++;
@@ -404,21 +376,17 @@ function transformToMatchData(
     if (round.winner === 'CT') teamStats[winnerTeam].ctRoundsWon++;
     else teamStats[winnerTeam].tRoundsWon++;
 
-    // Win type
     const winType = round.winReason;
     if (winType === 'elimination') teamStats[winnerTeam].roundWinTypes.elimination++;
     else if (winType === 'bomb_defused') teamStats[winnerTeam].roundWinTypes.bombDefused++;
     else if (winType === 'bomb_exploded') teamStats[winnerTeam].roundWinTypes.bombExploded++;
     else teamStats[winnerTeam].roundWinTypes.timeout++;
 
-    // Track damage per player per round (including leg shots)
     const roundDamage = new Map<string, number>();
     for (const dmg of round.damage) {
-      // Only count damage to enemies
       if (dmg.attackerSide !== dmg.victimSide) {
         roundDamage.set(dmg.attacker, (roundDamage.get(dmg.attacker) || 0) + dmg.damage);
 
-        // Initialize player stats if needed
         const attackerTeam = dmg.attackerSide === 'CT' ? currentCT : currentT;
         if (!playerStatsMap.has(dmg.attacker)) {
           playerStatsMap.set(dmg.attacker, initPlayerStats(dmg.attacker, attackerTeam));
@@ -426,7 +394,6 @@ function transformToMatchData(
         const attackerStats = playerStatsMap.get(dmg.attacker)!;
         attackerStats.totalDamageDealt += dmg.damage;
 
-        // Track leg damage
         if (dmg.hitgroup === 'left leg') {
           attackerStats.leftLegDamage += dmg.damage;
         } else if (dmg.hitgroup === 'right leg') {
@@ -435,12 +402,9 @@ function transformToMatchData(
       }
     }
 
-    // Track kills/deaths per player this round
     const roundKills = new Map<string, number>();
     const roundDeaths = new Set<string>();
     const roundHeadshots = new Map<string, number>();
-
-    // Track opening duel (first enemy kill of the round)
     let openingKillProcessed = false;
 
     const killEvents: KillEvent[] = [];
@@ -448,17 +412,14 @@ function transformToMatchData(
       const killerTeam = kill.killerSide === 'CT' ? currentCT : currentT;
       const victimTeam = kill.victimSide === 'CT' ? currentCT : currentT;
 
-      // Only count enemy kills
       if (kill.killerSide !== kill.victimSide) {
         roundKills.set(kill.killer, (roundKills.get(kill.killer) || 0) + 1);
         if (kill.headshot) {
           roundHeadshots.set(kill.killer, (roundHeadshots.get(kill.killer) || 0) + 1);
         }
 
-        // Track opening duel (first enemy kill of the round)
         if (!openingKillProcessed) {
           openingKillProcessed = true;
-          // Ensure both players exist in stats
           if (!playerStatsMap.has(kill.killer)) {
             playerStatsMap.set(kill.killer, initPlayerStats(kill.killer, killerTeam));
           }
@@ -471,7 +432,6 @@ function transformToMatchData(
       }
       roundDeaths.add(kill.victim);
 
-      // Initialize player stats
       if (!playerStatsMap.has(kill.killer)) {
         playerStatsMap.set(kill.killer, initPlayerStats(kill.killer, killerTeam));
       }
@@ -479,7 +439,6 @@ function transformToMatchData(
         playerStatsMap.set(kill.victim, initPlayerStats(kill.victim, victimTeam));
       }
 
-      // Update overall stats
       const killerStats = playerStatsMap.get(kill.killer)!;
       const victimStats = playerStatsMap.get(kill.victim)!;
 
@@ -517,39 +476,29 @@ function transformToMatchData(
       });
     }
 
-    // Process assists
     for (const assist of round.assists) {
-      if (!playerStatsMap.has(assist.assister)) continue;
-      playerStatsMap.get(assist.assister)!.assists++;
+      const stats = playerStatsMap.get(assist.assister);
+      if (stats) stats.assists++;
     }
 
-    // Update damage stats
     for (const [player, damage] of roundDamage) {
-      if (!playerStatsMap.has(player)) continue;
-      const stats = playerStatsMap.get(player)!;
+      const stats = playerStatsMap.get(player);
+      if (!stats) continue;
       stats.damage += damage;
       if (isFirstHalf) stats.firstHalfDamage += damage;
       else stats.secondHalfDamage += damage;
 
-      // Determine side for this round
-      const playerTeam = stats.team;
-      const playerSide = (roundNum <= 15)
-        ? (playerTeam === startingCT ? 'CT' : 'T')
-        : (playerTeam === startingCT ? 'T' : 'CT');
+      const playerSide = getSide(stats.team);
 
       if (playerSide === 'CT') stats.ctDamage += damage;
       else stats.tDamage += damage;
     }
 
-    // Detect clutch situations (1vX where the player won)
-    // A clutch happens when a player is the last alive on their team and wins the round
     const enemyKills = round.kills.filter(k => k.killerSide !== k.victimSide);
     if (enemyKills.length > 0) {
-      // Build timeline of who was alive after each kill
       const ctPlayers = new Set<string>();
       const tPlayers = new Set<string>();
 
-      // Get all unique players from each side
       for (const kill of round.kills) {
         if (kill.killerSide === 'CT') ctPlayers.add(kill.killer);
         else tPlayers.add(kill.killer);
@@ -557,48 +506,23 @@ function transformToMatchData(
         else tPlayers.add(kill.victim);
       }
 
-      // Simulate round to find clutch situations
       const ctAlive = new Set(ctPlayers);
       const tAlive = new Set(tPlayers);
 
       for (const kill of enemyKills) {
-        // Remove victim from alive set
         if (kill.victimSide === 'CT') ctAlive.delete(kill.victim);
         else tAlive.delete(kill.victim);
 
-        // Check for 1vX situation
         const killerSide = kill.killerSide;
         const aliveSet = killerSide === 'CT' ? ctAlive : tAlive;
         const enemyAlive = killerSide === 'CT' ? tAlive : ctAlive;
 
-        // If killer is last alive on their team and enemies still alive
         if (aliveSet.size === 1 && enemyAlive.size > 0) {
-          const clutchPlayer = Array.from(aliveSet)[0];
-          const killerTeam = killerSide === 'CT' ? currentCT : currentT;
-
-          // Ensure player exists
-          if (!playerStatsMap.has(clutchPlayer)) {
-            playerStatsMap.set(clutchPlayer, initPlayerStats(clutchPlayer, killerTeam));
-          }
-
-          // Only count once per round - check if this is a new clutch attempt
-          const playerStats = playerStatsMap.get(clutchPlayer)!;
-          const wasInClutch = playerStats.clutchesAttempted > 0 &&
-            rounds.slice(0, idx).reduce((acc, r) => acc +
-              (r.kills.filter(k => k.killerSide !== k.victimSide &&
-                (k.killerSide === 'CT' ? currentCT : currentT) === playerStats.team).length > 0 ? 0 : 0), 0) >= 0;
-
-          // Simpler approach: mark this round as a clutch situation for this player
-          break; // Only detect first clutch situation per round
+          break;
         }
       }
     }
 
-    // Better clutch detection: after processing all kills, check final state
-    const finalCtDeaths = round.kills.filter(k => k.victimSide === 'CT').map(k => k.victim);
-    const finalTDeaths = round.kills.filter(k => k.victimSide === 'T').map(k => k.victim);
-
-    // Get all players who participated in the round
     const ctParticipants = new Set<string>();
     const tParticipants = new Set<string>();
     for (const kill of round.kills) {
@@ -608,8 +532,6 @@ function transformToMatchData(
       else tParticipants.add(kill.victim);
     }
 
-    // Find clutcher: player who was last alive on their team when multiple enemies were alive
-    // We need to process kills in order and track player counts
     let ctLiving = new Set(ctParticipants);
     let tLiving = new Set(tParticipants);
     let clutchPlayer: string | null = null;
@@ -617,21 +539,18 @@ function transformToMatchData(
 
     for (let i = 0; i < enemyKills.length; i++) {
       const kill = enemyKills[i];
-      // Remove victim
       if (kill.victimSide === 'CT') ctLiving.delete(kill.victim);
       else tLiving.delete(kill.victim);
 
       const killerTeamAlive = kill.killerSide === 'CT' ? ctLiving : tLiving;
       const enemyTeamAlive = kill.killerSide === 'CT' ? tLiving : ctLiving;
 
-      // If killer's team is now down to 1 and enemies > 0, this is a clutch situation
       if (killerTeamAlive.size === 1 && enemyTeamAlive.size > 0 && !clutchPlayer) {
         clutchPlayer = Array.from(killerTeamAlive)[0];
         clutchEnemiesLeft = enemyTeamAlive.size;
       }
     }
 
-    // If there was a clutch situation, record it
     if (clutchPlayer && clutchEnemiesLeft > 0) {
       const playerTeam = ctParticipants.has(clutchPlayer) ? currentCT : currentT;
       if (!playerStatsMap.has(clutchPlayer)) {
@@ -640,19 +559,15 @@ function transformToMatchData(
       const stats = playerStatsMap.get(clutchPlayer)!;
       stats.clutchesAttempted++;
 
-      // Check if they won
       const playerSide = stats.team === currentCT ? 'CT' : 'T';
       if (round.winner === playerSide) {
         stats.clutchesWon++;
       }
     }
 
-    // Build flash events by linking throws to blinds via entindex
     const flashEvents: FlashEvent[] = [];
     for (const flash of round.flashes) {
       const throwerTeam = flash.throwerSide === 'CT' ? currentCT : flash.throwerSide === 'T' ? currentT : 'Spectator';
-
-      // Find all blinds caused by this flash
       const blindsForFlash = round.blinds.filter(b => b.entindex === flash.entindex);
 
       const blindEffects: BlindEffect[] = blindsForFlash.map(b => {
@@ -682,7 +597,6 @@ function transformToMatchData(
         blinds: blindEffects,
       });
 
-      // Update thrower's flash stats
       if (flash.throwerSide !== 'Spectator') {
         const throwerTeamName = flash.throwerSide === 'CT' ? currentCT : currentT;
         if (!playerStatsMap.has(flash.thrower)) {
@@ -703,7 +617,6 @@ function transformToMatchData(
             throwerStats.flashStats.selfBlindTime += blind.duration;
           } else if (blind.isSpectator) {
             throwerStats.flashStats.spectatorsFlashed++;
-            // Track spectator by name
             const existing = throwerStats.flashStats.spectatorBlinds.find(s => s.name === blind.victim);
             if (existing) {
               existing.totalTime += blind.duration;
@@ -715,7 +628,6 @@ function transformToMatchData(
       }
     }
 
-    // Build chat messages with relative timestamps
     const chatMessages: ChatMessage[] = round.chat.map(c => {
       const playerTeam = c.playerSide === 'CT' ? currentCT : currentT;
       const relativeMs = c.timestamp.getTime() - round.startTime.getTime();
@@ -723,7 +635,6 @@ function transformToMatchData(
 
       let relativeTime: string;
       if (relativeSecs < 0) {
-        // Freeze time - show as negative timestamp
         const absMs = Math.abs(relativeMs);
         const absSecs = Math.floor(absMs / 1000);
         const mins = Math.floor(absSecs / 60);
@@ -747,7 +658,6 @@ function transformToMatchData(
       };
     });
 
-    // Build per-round player stats
     const allPlayers = new Set<string>();
     round.kills.forEach(k => { allPlayers.add(k.killer); allPlayers.add(k.victim); });
     round.damage.forEach(d => { allPlayers.add(d.attacker); allPlayers.add(d.victim); });
@@ -757,27 +667,21 @@ function transformToMatchData(
       const stats = playerStatsMap.get(player);
       if (!stats) continue;
 
-      const playerSide: Side = (roundNum <= 15)
-        ? (stats.team === startingCT ? 'CT' : 'T')
-        : (stats.team === startingCT ? 'T' : 'CT');
-
       playerRoundStats.push({
         name: player,
         team: stats.team,
-        side: playerSide,
+        side: getSide(stats.team),
         kills: roundKills.get(player) || 0,
         deaths: roundDeaths.has(player) ? 1 : 0,
-        assists: 0, // Would need per-round tracking
+        assists: 0,
         damage: roundDamage.get(player) || 0,
         survived: !roundDeaths.has(player),
       });
     }
 
-    // Calculate running score
     const ctWins = rounds.slice(0, idx + 1).filter(r => r.winner === 'CT').length;
     const tWins = rounds.slice(0, idx + 1).filter(r => r.winner === 'T').length;
 
-    // Track kills per round for multi-kill counting
     for (const [player, kills] of roundKills) {
       if (!killsPerRoundPerPlayer.has(player)) {
         killsPerRoundPerPlayer.set(player, []);
@@ -799,7 +703,6 @@ function transformToMatchData(
     };
   });
 
-  // Calculate multi-kill rounds for each player
   for (const [player, killsArray] of killsPerRoundPerPlayer) {
     const stats = playerStatsMap.get(player);
     if (!stats) continue;
@@ -812,18 +715,14 @@ function transformToMatchData(
     }
   }
 
-  // Calculate final player stats
   const totalRounds = rounds.length;
   const firstHalfRounds = Math.min(15, totalRounds);
   const secondHalfRounds = Math.max(0, totalRounds - 15);
-  const ctRounds = rounds.filter((_, i) => i < 15 ? true : false).length; // Simplified
-  const tRounds = totalRounds - ctRounds;
 
   const players: PlayerStats[] = Array.from(playerStatsMap.entries()).map(([name, stats]) => {
     const ctRoundsPlayed = Math.min(15, totalRounds);
     const tRoundsPlayed = Math.max(0, totalRounds - 15);
 
-    // Calculate leg shot percentage
     const totalLegDamage = stats.leftLegDamage + stats.rightLegDamage;
     const legShotPercent = stats.totalDamageDealt > 0
       ? Math.round((totalLegDamage / stats.totalDamageDealt) * 100)
@@ -861,7 +760,6 @@ function transformToMatchData(
         adr: tRoundsPlayed > 0 ? Math.round((stats.tDamage / tRoundsPlayed) * 10) / 10 : 0,
         hsPercent: stats.tKills > 0 ? Math.round((stats.tHeadshots / stats.tKills) * 100) : 0,
       },
-      // Advanced stats
       openingKills: stats.openingKills,
       openingDeaths: stats.openingDeaths,
       clutchesWon: stats.clutchesWon,
@@ -888,7 +786,6 @@ function transformToMatchData(
     };
   }).sort((a, b) => b.kills - a.kills);
 
-  // Convert date from MM/DD/YYYY to DD/MM/YYYY (EU format)
   const [month, day, year] = date.split('/');
   const euDate = `${day}/${month}/${year}`;
 

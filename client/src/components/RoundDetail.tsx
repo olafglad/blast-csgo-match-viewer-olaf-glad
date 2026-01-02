@@ -1,7 +1,7 @@
-import type {RoundData, PlayerStats, Side, TeamStats} from "@shared";
-import {CT_COLOR, T_COLOR, formatDuration} from "@shared";
-import {SideIcon} from "./RoundTimeline";
-import {RoundChat} from "./RoundChat";
+import type { RoundData, PlayerStats, Side, TeamStats } from '@shared';
+import { CT_COLOR, T_COLOR, formatDuration } from '@shared';
+import { SideIcon } from './RoundTimeline';
+import { RoundChat } from './RoundChat';
 
 interface Props {
   round: RoundData;
@@ -259,8 +259,7 @@ export function RoundDetail({round, allPlayers, teams}: Props) {
         </div>
       </div>
 
-      {/* Round Chat */}
-      <RoundChat messages={round.chat} teams={teams} />
+      <RoundChat messages={round.chat} />
     </div>
   );
 }
