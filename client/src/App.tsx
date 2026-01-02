@@ -5,6 +5,7 @@ import {RoundTimeline} from "./components/RoundTimeline";
 import {Scoreboard} from "./components/Scoreboard";
 import {RoundDetail} from "./components/RoundDetail";
 import {calculateAvgRoundLength} from "@shared";
+import {assetUrl} from "./utils/assetUrl";
 
 function App() {
   const {data, loading, error} = useMatchData();
@@ -38,7 +39,7 @@ function App() {
         {/* Header */}
         <h1 className="text-3xl font-bold text-center mb-6 flex items-center justify-center gap-3">
           <img
-            src="/csgo-logo.png"
+            src={assetUrl("csgo-logo.png")}
             alt="CS:GO"
             className="h-15 object-contain"
           />

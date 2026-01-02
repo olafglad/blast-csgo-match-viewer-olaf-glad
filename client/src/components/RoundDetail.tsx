@@ -2,6 +2,7 @@ import type { RoundData, PlayerStats, Side, TeamStats } from '@shared';
 import { CT_COLOR, T_COLOR, formatDuration } from '@shared';
 import { SideIcon } from './RoundTimeline';
 import { RoundChat } from './RoundChat';
+import { assetUrl } from '../utils/assetUrl';
 
 interface Props {
   round: RoundData;
@@ -119,7 +120,7 @@ export function RoundDetail({round, allPlayers, teams}: Props) {
                       {kill.killer}
                     </span>
                     <img
-                      src={kill.headshot ? "/headshot.png" : "/skull-white.png"}
+                      src={assetUrl(kill.headshot ? "headshot.png" : "skull-white.png")}
                       alt={kill.headshot ? "headshot" : "kill"}
                       className="w-8 h-8 object-contain"
                     />
@@ -147,7 +148,7 @@ export function RoundDetail({round, allPlayers, teams}: Props) {
                   </span>
                   <span className="text-gray-400">defused the bomb</span>
                   <img
-                    src="/defuse-pliers.png"
+                    src={assetUrl("defuse-pliers.png")}
                     alt="Defused"
                     className="ml-auto"
                     style={{width: 16, height: 16}}

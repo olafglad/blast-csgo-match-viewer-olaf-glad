@@ -1,5 +1,6 @@
 import type { RoundData } from '@shared';
 import { CT_COLOR, T_COLOR } from '@shared';
+import { assetUrl } from '../utils/assetUrl';
 
 interface Props {
   rounds: RoundData[];
@@ -17,7 +18,7 @@ const WinReasonIcon = ({ winReason }: { winReason: string }) => {
   if (winReason === "bomb_defused") {
     return (
       <img
-        src="/defuse-pliers.png"
+        src={assetUrl("defuse-pliers.png")}
         alt="Defused"
         className="inline-block"
         style={{ width: 16, height: 16 }}
@@ -29,7 +30,7 @@ const WinReasonIcon = ({ winReason }: { winReason: string }) => {
 
 const SideIcon = ({side, size = 16}: {side: "CT" | "T"; size?: number}) => (
   <img
-    src={side === "CT" ? "/ct.png" : "/t.png"}
+    src={assetUrl(side === "CT" ? "ct.png" : "t.png")}
     alt={side}
     className="inline-block"
     style={{width: size, height: size}}

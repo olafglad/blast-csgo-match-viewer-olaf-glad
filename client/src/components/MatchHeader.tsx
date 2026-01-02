@@ -1,6 +1,7 @@
 import type { TeamStats } from '@shared';
 import { TEAM_LOGOS } from '@shared';
 import { SideIcon } from './RoundTimeline';
+import { assetUrl } from '../utils/assetUrl';
 
 interface Props {
   teams: [TeamStats, TeamStats];
@@ -20,7 +21,7 @@ export function MatchHeader({ teams, map, duration, date, avgRoundLength }: Prop
           <div className="flex items-center justify-end gap-3">
             {TEAM_LOGOS[team1.name] && (
               <img
-                src={TEAM_LOGOS[team1.name]}
+                src={assetUrl(TEAM_LOGOS[team1.name])}
                 alt={team1.name}
                 className="w-14 h-14 object-contain drop-shadow-lg"
                 style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.5))' }}
@@ -44,7 +45,7 @@ export function MatchHeader({ teams, map, duration, date, avgRoundLength }: Prop
             <h2 className="text-2xl font-bold text-white">{team2.name}</h2>
             {TEAM_LOGOS[team2.name] && (
               <img
-                src={TEAM_LOGOS[team2.name]}
+                src={assetUrl(TEAM_LOGOS[team2.name])}
                 alt={team2.name}
                 className="w-14 h-14 object-contain drop-shadow-lg"
                 style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.5))' }}

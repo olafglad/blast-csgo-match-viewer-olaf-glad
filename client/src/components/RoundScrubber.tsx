@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import type { RoundData, TeamStats } from '@shared';
 import { CT_COLOR, T_COLOR, TEAM_LOGOS } from '@shared';
+import { assetUrl } from '../utils/assetUrl';
 
 interface Props {
   rounds: RoundData[];
@@ -96,7 +97,7 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
             <div className="flex items-center gap-3">
               {TEAM_LOGOS[teams[0].name] && (
                 <img
-                  src={TEAM_LOGOS[teams[0].name]}
+                  src={assetUrl(TEAM_LOGOS[teams[0].name])}
                   alt={teams[0].name}
                   className="w-12 h-12 object-contain"
                 />
@@ -123,7 +124,7 @@ export function RoundScrubber({ rounds, teams, currentRound, onRoundChange }: Pr
               </span>
               {TEAM_LOGOS[teams[1].name] && (
                 <img
-                  src={TEAM_LOGOS[teams[1].name]}
+                  src={assetUrl(TEAM_LOGOS[teams[1].name])}
                   alt={teams[1].name}
                   className="w-12 h-12 object-contain"
                 />
