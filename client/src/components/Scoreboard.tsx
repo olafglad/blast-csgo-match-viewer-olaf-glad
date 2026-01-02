@@ -18,7 +18,7 @@ type ViewMode =
 
 export function Scoreboard({players, teams, rounds}: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>("overall");
-  const [timelineRound, setTimelineRound] = useState(rounds?.length || 1);
+  const [timelineRound, setTimelineRound] = useState(1);
 
   const team1Players = players.filter((p) => p.team === teams[0].name);
   const team2Players = players.filter((p) => p.team === teams[1].name);
