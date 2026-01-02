@@ -2,7 +2,7 @@
 
 A web application for visualizing CS:GO match statistics from game logs. Built as a coding challenge for BLAST.
 
-**Author:** Olaf Glad
+**[Live Demo](https://olafglad.github.io/blast-csgo-match-viewer-olaf-glad/)** | **Author:** Olaf Glad
 
 ## Features
 

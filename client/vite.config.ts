@@ -5,6 +5,7 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/blast-csgo-match-viewer-olaf-glad/',
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, '../shared'),

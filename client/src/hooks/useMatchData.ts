@@ -9,14 +9,25 @@ export function useMatchData() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/match`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch match data');
-        return res.json();
-      })
-      .then(setData)
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
+    async function fetchData() {
+      // Try API first (local dev), fall back to static JSON (GitHub Pages)
+      try {
+        const res = await fetch(`${API_URL}/match`);
+        if (!res.ok) throw new Error('API unavailable');
+        setData(await res.json());
+      } catch {
+        try {
+          const res = await fetch('/match.json');
+          if (!res.ok) throw new Error('Failed to load match data');
+          setData(await res.json());
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Unknown error');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   return { data, loading, error };
